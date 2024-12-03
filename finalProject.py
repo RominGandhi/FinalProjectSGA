@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import tkinter as tk
+from tkinter import messagebox, simpledialog
 
 # Objective functions
 def sphere_function(x):
@@ -11,15 +13,6 @@ def rosenbrock_function(x):
 def himmelblau_function(x):
     return (x[0]**2 + x[1] - 11)**2 + (x[0] + x[1]**2 - 7)**2
 
-#######################################################################################
-# genetic_algorithm() - genetic algorithm used to minimize an objective function
-#                       using reproduction, crossover, and mutation
-#
-# Params: objective_function (function), bounds (list of tuples), population_size (int) 
-#         generations (int), mutation_rate (float)
-#
-# Return: best_individual (ndarray)
-#
 def genetic_algorithm(
     objective_function, bounds, population_size=50, generations=100, mutation_rate=0.1
 ):
@@ -107,9 +100,91 @@ def genetic_algorithm(
     plt.grid(True)
     plt.show()
 
-    return best_individual
+    return best_individual, best_fitness
 
+# Tkinter GUI
+def run_gui():
+    def start_ga():
+        # Retrieve inputs
+        try:
+            objective_choice = int(obj_func_var.get())
+            if objective_choice == 1:
+                objective_function = sphere_function
+            elif objective_choice == 2:
+                objective_function = rosenbrock_function
+            elif objective_choice == 3:
+                objective_function = himmelblau_function
+            elif objective_choice == 4:
+                func_input = custom_func_entry.get()
+                objective_function = eval(f"lambda x: {func_input}")
+            else:
+                messagebox.showerror("Error", "Invalid objective function choice.")
+                return
 
-# Create bounds and run the GA
-bounds = [(-5, 5)] * 2  # Bounds for 2D
-solution = genetic_algorithm(rosenbrock_function, bounds)
+            num_variables = int(num_vars_entry.get())
+            bounds = []
+            for i in range(num_variables):
+                bounds.append(tuple(map(float, bounds_entries[i].get().split(','))))
+
+            population_size = int(pop_size_entry.get())
+            generations = int(generations_entry.get())
+            mutation_rate = float(mutation_rate_entry.get())
+
+            # Run GA
+            best_solution, best_fitness  = genetic_algorithm(objective_function, bounds, population_size, generations, mutation_rate)
+            messagebox.showinfo(
+            "Best Solution",
+            f"Best Solution Found: {best_solution}\nFinal Fitness Score: {best_fitness}"
+        )
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
+
+    # Tkinter window setup
+    root = tk.Tk()
+    root.title("Genetic Algorithm GUI")
+
+    # Objective function selection
+    tk.Label(root, text="Select Objective Function").grid(row=0, column=0, columnspan=2)
+    obj_func_var = tk.StringVar(value="1")
+    tk.Radiobutton(root, text="Sphere Function", variable=obj_func_var, value="1").grid(row=1, column=0)
+    tk.Radiobutton(root, text="Rosenbrock Function", variable=obj_func_var, value="2").grid(row=2, column=0)
+    tk.Radiobutton(root, text="Himmelblau Function", variable=obj_func_var, value="3").grid(row=3, column=0)
+    tk.Radiobutton(root, text="Custom Function", variable=obj_func_var, value="4").grid(row=4, column=0)
+    custom_func_entry = tk.Entry(root, width=40)
+    custom_func_entry.grid(row=4, column=1)
+
+    # Number of variables
+    tk.Label(root, text="Number of Variables:").grid(row=5, column=0)
+    num_vars_entry = tk.Entry(root)
+    num_vars_entry.grid(row=5, column=1)
+
+    # Bounds for each variable
+    tk.Label(root, text="Enter Bounds (min,max for each variable):").grid(row=6, column=0, columnspan=2)
+    bounds_entries = [tk.Entry(root) for _ in range(10)]  # Assume max 10 variables for simplicity
+    for i, entry in enumerate(bounds_entries):
+        entry.grid(row=7+i, column=0, columnspan=2)
+
+    # Population size, generations, mutation rate
+    tk.Label(root, text="Population Size:").grid(row=17, column=0)
+    pop_size_entry = tk.Entry(root)
+    pop_size_entry.insert(0, "50")
+    pop_size_entry.grid(row=17, column=1)
+
+    tk.Label(root, text="Generations:").grid(row=18, column=0)
+    generations_entry = tk.Entry(root)
+    generations_entry.insert(0, "100")
+    generations_entry.grid(row=18, column=1)
+
+    tk.Label(root, text="Mutation Rate:").grid(row=19, column=0)
+    mutation_rate_entry = tk.Entry(root)
+    mutation_rate_entry.insert(0, "0.1")
+    mutation_rate_entry.grid(row=19, column=1)
+
+    # Start button
+    tk.Button(root, text="Start Genetic Algorithm", command=start_ga).grid(row=20, column=0, columnspan=2)
+
+    root.mainloop()
+
+# Run the GUI
+if __name__ == "__main__":
+    run_gui()
